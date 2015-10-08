@@ -1,0 +1,687 @@
+
+
+local composer = require( "composer" )
+local scene = composer.newScene()
+
+
+local physics = require "physics"
+physics.start()
+physics.setGravity( 0, 90)
+
+physics.setDrawMode("normal")
+local physicsData = (require "shapedefs").physicsData(1.0)
+local physicsData1 = (require "shapedefsbubble").physicsData(1.0)
+
+local mydata = require( "mydata" )
+
+local startcolumn2hit = false
+local bottomcolumnhit1 = false
+local bottomcolumnhit2 = false
+local bottomcolumnhit3 = false
+local gameStarted = false
+local birdinitialjump = false
+local flewup = false
+local allowjump = true
+local popSound = audio.loadSound( "pop.mp3" )
+
+
+count = 0
+count2 = 0
+
+--load sound
+local landSound = audio.loadSound( "land.mp3" )
+local bubbleSound = audio.loadSound( "bubbleAppear.mp3" )
+local jumpSound = audio.loadSound( "jump.mp3" )
+local gameSound = audio.loadSound( "gameoverSound.wav" )
+
+
+---------------------------------------------------------------------------------
+-- All code outside of the listener functions will only be executed ONCE
+-- unless "composer.removeScene()" is called.
+---------------------------------------------------------------------------------
+
+-- local forward references should go here
+
+---------------------------------------------------------------------------------
+
+--COLLISION FUNCTION--
+function playerCollision( self, event )
+
+
+		if event.target.type == "player" and event.other.type == "startsensorRect" then
+			if event.phase == "began" then
+
+				print ("collided")
+				addColumnTimer = timer.performWithDelay(1500, addColumns)
+
+				startcolumn2hit = true
+				birdinitialjump = true
+				bottomcolumnhit1 = true
+				flewup = true
+				allowjump = true
+
+				practice2 = display.newImageRect("practice2.png",500,100)
+				practice2.anchorX = 0.5
+				practice2.anchorY = 0.5
+				practice2.x = display.contentWidth/2
+				practice2.y = display.contentHeight/4
+				practice2: scale(2.3,2)
+
+				if startsensorRect ~= nil then
+					startsensorRect:removeSelf()
+					startsensorRect = nil
+				end
+   				audio1Channel = audio.play( landSound )
+
+			end
+		end
+
+
+		if event.target.type == "player" and event.other.type == "sensorRect1" then
+			if event.phase == "began" then
+  				audio1Channel = audio.play( landSound )
+
+				print ("collided")
+				addColumnTimer = timer.performWithDelay(1500, addColumns)
+				bottomcolumnhit1 = true
+				bottomcolumnhit2 = true
+				allowjump = true
+
+				birdinitialjump = true
+				startcolumn2hit = false
+				flewup = true
+			
+				if practice2 ~= nil then
+					practice2:removeSelf()
+					practice2 = nil
+				end
+
+				if sensorRect1 ~= nil then
+					sensorRect1:removeSelf()
+					sensorRect1 = nil
+				end
+
+				if bottomColumn.x < display.contentWidth/9 then
+					bottomColumn: translate(-4,0)
+					print("lol")
+				end
+				if startColumn2.x > display.contentWidth/9 then
+					startColumn2: translate(-4,0)
+					print ("hi")
+				end
+
+			end
+		end
+
+		if event.target.type == "player" and event.other.type == "platform" then
+			if event.phase == "began" then
+				audio1Channel = audio.play( gameSound )
+
+				composer.gotoScene( "restart" )
+			end
+		end
+		if event.target.type == "player" and event.other.type == "platform2" then
+			if event.phase == "began" then
+				audio1Channel = audio.play( gameSound )
+
+				composer.gotoScene( "restart" )
+			end
+		end
+
+		if event.target.type == "player" and event.other.type == "rightbarrier" then
+			if event.phase == "began" then
+				audio1Channel = audio.play( gameSound )
+	
+				composer.gotoScene( "restart" )
+			end
+		end
+		if event.target.type == "player" and event.other.type == "leftbarrier" then
+			if event.phase == "began" then
+				audio1Channel = audio.play( gameSound )
+
+				composer.gotoScene( "restart" )
+			end
+		end
+		if event.target.type == "player" and event.other.type == "bottombarrier" then
+			if event.phase == "began" then
+				audio1Channel = audio.play( gameSound )
+
+				composer.gotoScene( "restart" )
+			end
+		end
+
+	
+end
+
+
+
+--click & drag to make squid jump--
+function flyUp(event)
+
+	       
+	if gameStarted == false then
+		player.bodyType = "dynamic"
+		instructions.alpha = 0
+		instructions2.alpha = 0
+		instructions3.alpha = 0
+
+		tb.alpha = 1
+		gameStarted = true
+
+		practice = display.newImageRect("practice.png",500,100)
+		practice.anchorX = 0.5
+		practice.anchorY = 0.5
+		practice.x = display.contentWidth/2
+		practice.y = display.contentHeight/4
+		practice: scale(2.3,1.8)
+	
+		restart2 = display.newImageRect("ingamerestart.png",300,65)
+		restart2.anchorX = 0.5
+		restart2.anchorY = 1
+		restart2.x = display.contentWidth/1.1
+		restart2.y = display.contentHeight/1
+		restart2: scale(.7,1.2)
+		restart2.alpha = 1
+
+
+
+		function restartButton(event)
+			if gameStarted == true then
+
+				if event.phase == "began" then
+					composer.gotoScene( "restart" )
+			 		audio1Channel = audio.play( popSound )
+		
+				end
+				if restart2 ~= nil then
+					restart2:removeSelf()
+					restart2 = nil
+				end
+			end
+		end
+		restart2:addEventListener("touch", restartButton)
+
+	end
+
+    if event.phase == "began" and allowjump == true then
+   		display.getCurrentStage():setFocus(player)
+
+   	elseif (event.phase == "moved" and allowjump == true) then
+					if myLine ~= nil then
+   						myLine.parent:remove(myLine)
+   						myLine = nil
+   					end
+   		myLine = display.newLine(event.xStart, event.yStart, event.x, event.y) -- displays line when you drag and click
+   		myLine:setColor(255,255,255,50)
+   		myLine.width = 8
+	
+	elseif event.phase == "ended" and allowjump == true then
+		if sensorRect1 ~= nil or startsensorRect ~=nil then	
+				 player:applyLinearImpulse(((event.xStart - event.x)/7.5), ((event.yStart-event.y)/7.5), player.x, player.y) --gives linear impulse strength
+				 display.getCurrentStage():setFocus(nil)
+
+					if myLine ~= nil then
+   						myLine.parent:remove(myLine)
+   						myLine = nil
+   					end
+				 
+				 if flewup == true then  -- allows squid to only jump once
+				 	allowjump = false
+				 end
+				 flewup = true
+
+				 if count2 == 1 then
+				 	p_options1 =
+					{
+						width = 300,
+						height = 450,
+						numFrames = 10,
+						sheetContentWidth = 950,
+						sheetContentHeight = 1800,
+					}
+				--character(ink sprite)
+					playerInk = graphics.newImageSheet("ink.png", p_options1)
+					ink = display.newSprite(playerInk, { name = "ink", start=1, count=10, time = 350, loopCount = 1})
+					ink.x = player.x
+					ink.y = player.y + 50
+					ink: scale(.45,.45)
+					ink.rotation = 180
+					ink.alpha = 1
+					physics.addBody(ink, "static")
+					ink.isSensor = true
+				 	ink: play()
+			     	if ink.frame == 10 then
+						ink.alpha = 0
+				    end
+
+  				 	audio1Channel = audio.play( jumpSound )
+				 end
+				 
+
+				 count2 = 1
+		end
+	end
+    	
+end
+
+--makes ground move
+function platformScroller(self,event)
+	
+	if self.x < (-900 + (self.speed*2)) then
+		self.x = 900
+	else 
+		self.x = self.x - self.speed
+	end
+	
+end
+
+
+--gives physics body
+function addBody(event)
+	physics.addBody(bottomColumn, "static", {density=1, bounce=0, friction=.2}, physicsData1:get("bubble"))
+end
+
+
+
+
+--moves bird to left of screen after first initial jump
+function birdleft(event)
+	if birdinitialjump == true then
+		player.bodyType = "static"
+		if player.x < display.contentWidth/5 then
+			player:translate(0,0)
+			if player.bodyType == "static" then
+				player.bodyType = "dynamic"
+			end
+			birdinitialjump = false
+		else
+			player: translate(-40, 0)
+		end
+	end
+end
+
+
+
+
+--moves startColumns to left after jump
+function startcolumn2left(event)
+	if startcolumn2hit == true then
+		if practice ~= nil then
+			practice:removeSelf()
+			practice = nil
+		end
+
+
+		if startColumn2.x < display.contentWidth/5 then
+			startColumn2:translate(0,0)
+		else
+			bg.x = bg.x -(1.5)
+			startColumn2: translate(-40, 0)
+		end
+
+		startColumn:translate (-40, 0)
+	end
+	if startcolumn2hit == false then
+
+		if startColumn2.x < display.contentWidth/2 then
+			startColumn2: translate (-40, 0)
+
+		end
+	end
+
+
+	for a = elements.numChildren,1,-1000  do
+			if sensorRect1 ~= nil then		
+				if elements[a].x < display.contentWidth/1.1 then
+					elements[a]:translate(0,0)
+					bottomcolumnhit1 = false
+				else
+						elements[a]:translate(-40,0)
+				end
+			end
+		
+
+		--first
+		if bottomcolumnhit1 == true then
+			if sensorRect1 == nil then
+				--if platform goes past width/10 then stop
+				if elements[a].x < display.contentWidth/5  then
+					elements[a]:translate(0,0)
+					bottomcolumnhit1 = false
+					flewup = false
+
+				else
+					bg.x = bg.x -(1.5)
+
+					elements[a]: translate(-40, 0)
+					if elements[1 + count].x < display.contentWidth/4 then
+						print("moving!!!") --test
+						elements[1+ count]: translate (-40, 0)
+						if elements[1 + count].x < display.contentWidth/15 - 400 then
+							elements[1 + count]: translate (0,0)
+							count = count + 1
+							print("moving to out of screen") --test
+							bottomcolumnhit2 = false
+							flewup = false
+							if elements[1+count].x < display.contentWidth/15 - 300 then
+								elements[1+count]:removeSelf()
+								elements[1+count] = nil
+							end
+						end
+					end 	
+				end
+			end
+		end
+
+	--move left platform out of screen
+		if(elements[a].x < display.contentCenterX - 170) then
+				if elements[a].scoreAdded == false then
+					mydata.score = mydata.score + 1
+					tb.text = mydata.score
+					elements[a].scoreAdded = true
+				end
+		end
+	end
+	
+end
+
+--Adding columns to screen function
+function addColumns()
+	
+	height = math.random(display.contentCenterY- 80, display.contentCenterY + 200)
+	width = math.random(display.contentCenterX, display.contentCenterX + 600)
+
+	bottomColumn = display.newImageRect('bubble.png',250,714)
+	bottomColumn.anchorX = 0.5
+	bottomColumn.anchorY = 0
+	bottomColumn.x = width
+	bottomColumn.y = height
+	bottomColumn.type= "bottomColumn"
+	bottomColumn.scoreAdded = false
+	bottomColumn.alpha = 0
+	bottomColumn: scale(1,.2)
+	bottomcolumnTransition = transition.to(bottomColumn,{time=600, alpha=1})
+	elements:insert(bottomColumn)
+
+	sensorRect1 = display.newRect(width, height -1000, 250, 10)
+	sensorRect1.isSensor = true
+	sensorRect1.type = "sensorRect1"
+	physics.addBody( sensorRect1, "dynamic", {density=1, bounce=0, friction=.2} )
+	sensorRect1.isVisible = false
+
+    audio1Channel = audio.play( bubbleSound )
+
+	addBody()
+
+end	
+
+
+--collects and counts memory 
+local function checkMemory()
+   collectgarbage( "collect" )
+   local memUsage_str = string.format( "MEMORY = %.3f KB", collectgarbage( "count" ) )
+   --print( memUsage_str, "TEXTURE = "..(system.getInfo("textureMemoryUsed") / (1024 * 1024) ) )
+end
+
+
+--"scene:create()"
+function scene:create( event )
+
+   local sceneGroup = self.view
+   
+   gameStarted = false
+   mydata.score = 0
+
+   -- Initialize the scene here.
+   -- Example: add display objects to "sceneGroup", add touch listeners, etc. 
+
+    bg = display.newImageRect('bg1.png',900,1425)
+	bg.anchorX = .15
+	bg.anchorY = .9
+	bg: scale (8,2)
+	bg.x = display.contentCenterX
+	bg.y = display.contentHeight
+	bg.speed = 4
+	sceneGroup:insert(bg)
+
+	rightbarrier = display.newRect(display.contentWidth*1.5, display.contentCenterY, 50, display.contentHeight*50)
+	physics.addBody(rightbarrier, "static", {density = 1, friction = 1, bounce = 0})
+	rightbarrier.type = "rightbarrier"
+	sceneGroup:insert(rightbarrier)
+    
+
+    leftbarrier = display.newRect(-300, display.contentCenterY, 50, display.contentHeight*50)
+	physics.addBody(leftbarrier, "static", {density = 1, friction = 1, bounce = 0})
+	leftbarrier.type = "leftbarrier"
+	sceneGroup:insert(leftbarrier)
+
+
+  	bottombarrier = display.newRect(display.contentCenterX, display.contentHeight*1.03, display.contentWidth, 50)
+	physics.addBody(bottombarrier, "static", {density = 1, friction = 1, bounce = 0})
+	bottombarrier.type = "bottombarrier"
+	sceneGroup:insert(bottombarrier)
+
+
+    elements = display.newGroup()
+	elements.anchorChildren = true
+	elements.anchorX = 0
+	elements.anchorY = 1
+	elements.x = 0
+	elements.y = 0
+	sceneGroup:insert(elements)
+
+
+	
+	startColumn = display.newImageRect('bubble.png',250,500)
+	startColumn.anchorX = 0.5
+	startColumn.anchorY = 0
+	startColumn.x = display.contentWidth / 10
+	startColumn.y = display.contentHeight / 2
+	startColumn.type = "startColumn"
+	startColumn: scale(1,.3)
+	physics.addBody(startColumn, "static", {density=1, bounce=0, friction=.2})
+	sceneGroup:insert(startColumn)
+    
+	startColumn2 = display.newImageRect('bubble.png',250,500)
+	startColumn2.anchorX = 0.5
+	startColumn2.anchorY = 0
+	startColumn2.x = display.contentWidth / 1.1
+	startColumn2.y = display.contentHeight / 2
+	startColumn2.type = "startColumn2"
+	startColumn2: scale(1,.3)
+	physics.addBody(startColumn2, "static", {density=1, bounce=0, friction=.2})
+	sceneGroup:insert(startColumn2)
+
+	startsensorRect = display.newRect(display.contentWidth / 1.1, display.contentHeight / 10, 250, 10)
+	startsensorRect.isSensor = true
+	startsensorRect.type = "startsensorRect"
+	startsensorRect.isVisible = false
+	physics.addBody( startsensorRect, "dynamic", {density=1, bounce=0, friction=.2})
+
+
+	tb = display.newText(mydata.score,display.contentWidth/1.05, display.contentHeight/10, "Arial", 58)
+	tb:setFillColor(0,0,0)
+	tb.alpha = 0
+	sceneGroup:insert(tb)
+
+
+	p_options = 
+	{
+		-- Required params
+		width = 150,
+		height = 42,
+		numFrames = 1,
+		-- content scaling
+		sheetContentWidth = 160,
+		sheetContentHeight = 42,
+	}
+	
+	--character (squid)
+	playerSheet = graphics.newImageSheet( "bat.gif", p_options )
+	player = display.newSprite( playerSheet, { name="player", start=1, count=2, time=500 } )
+	player.anchorX = 0.5
+	player.anchorY = 0.5
+	player.x = display.contentWidth/10
+	player.y = display.contentHeight/4
+	player.type = "player"
+	player.collision = playerCollision
+	player:addEventListener("collision", player)
+	player: scale(.7,3)
+
+	physics.addBody(player, "static",{density=.1, bounce=0, friction=.2})
+	player:applyForce(0, -300, player.x, player.y)
+	player:play()
+	sceneGroup:insert(player)
+
+
+
+
+
+	--instruction after u press start	
+	instructions = display.newImageRect("instructions.png",400,328)
+	instructions.anchorX = 0.5
+	instructions.anchorY = 0.5
+	instructions.x = display.contentWidth/2.7
+	instructions.y = display.contentHeight/1.4
+	instructions: scale(.5,.5)
+	sceneGroup:insert(instructions)
+	
+	instructions2 = display.newImageRect("instructions2.gif",400,328)
+	instructions2.anchorX = 0.5
+	instructions2.anchorY = 0.5
+	instructions2.x = display.contentWidth/1.8
+	instructions2.y = display.contentHeight/1.8
+	instructions2.rotation = 70
+	instructions2: scale(.3,.3)
+	sceneGroup:insert(instructions2)
+	
+   	instructions3 = display.newImageRect("instructions3.png",400,328)
+	instructions3.anchorX = 0.5
+	instructions3.anchorY = 0.5
+	instructions3.x = display.contentWidth/2
+	instructions3.y = display.contentHeight/4
+	instructions3: scale(2.4, .85)
+	sceneGroup:insert(instructions3)
+	
+end
+
+-- "scene:show()"
+function scene:show( event )
+
+   local sceneGroup = self.view
+   local phase = event.phase
+
+   if ( phase == "will" ) then
+      -- Called when the scene is still off screen (but is about to come on screen).
+   elseif ( phase == "did" ) then
+      -- Called when the scene is now on screen.
+      -- Insert code here to make the scene come alive.
+      -- Example: start timers, begin animation, play audio, etc.
+	  
+	composer.removeScene("start")
+	Runtime:addEventListener("touch", flyUp)
+
+
+	Runtime:addEventListener("enterFrame", startcolumn2left)
+	Runtime:addEventListener("enterFrame", birdleft)
+
+
+    memTimer = timer.performWithDelay( 1000, checkMemory, 0 )
+
+
+ 
+   end
+end
+
+-- "scene:hide()"
+function scene:hide( event )
+
+   local sceneGroup = self.view
+   local phase = event.phase
+
+   if ( phase == "will" ) then
+      -- Called when the scene is on screen (but is about to go off screen).
+      -- Insert code here to "pause" the scene.
+      -- Example: stop timers, stop animation, stop audio, etc.
+	Runtime:removeEventListener("touch", flyUp)
+
+	Runtime:removeEventListener("enterFrame", platform)
+	Runtime:removeEventListener("enterFrame", platform2)
+	Runtime:removeEventListener("enterFrame", startcolumn2left)
+	Runtime:removeEventListener("enterFrame", birdleft)
+	Runtime:removeEventListener("enterFrame", startColumn)
+	Runtime:removeEventListener("enterFrame", startColumn2)
+	Runtime:removeEventListener("enterFrame", bottomColumn)
+	timer.cancel(memTimer)
+	  
+		if practice ~= nil then
+			practice:removeSelf()
+			practice = nil
+		end
+		
+		if practice2 ~= nil then
+			practice2:removeSelf()
+			practice2 = nil
+		end
+
+		if restart2 ~= nil then
+			restart2:removeSelf()
+			restart2 = nil
+		end
+
+		if startColumn2 ~= nil then
+			startColumn2:removeSelf()
+			startColumn2 = nil
+		end
+
+		if bottomColumn ~= nil then
+			bottomColumn:removeSelf()
+			bottomColumn = nil
+		end		
+		-- if enemy ~= nil then
+		-- 	enemy:removeSelf()
+		-- 	enemy = nil	
+		-- end
+
+		if myLine ~= nil then
+   			myLine.parent:remove(myLine)
+   			myLine = nil
+   		end
+		  
+   elseif ( phase == "did" ) then
+      -- Called immediately after scene goes off screen.
+   end
+end
+
+-- "scene:destroy()"
+function scene:destroy( event )
+
+   local sceneGroup = self.view
+
+   -- Called prior to the removal of scene's view ("sceneGroup").
+   -- Insert code here to clean up the scene.
+   -- Example: remove display objects, save state, etc.
+end
+
+---------------------------------------------------------------------------------
+
+-- Listener setup
+scene:addEventListener( "create", scene )
+scene:addEventListener( "show", scene )
+scene:addEventListener( "hide", scene )
+scene:addEventListener( "destroy", scene )
+
+---------------------------------------------------------------------------------
+
+return scene
+
+
+
+
+
+
+
+
+
+
+
